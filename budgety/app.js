@@ -1,4 +1,22 @@
-var budgetController = (function() {})();
+var budgetController = (function() {
+  var Expense = function(id, description, value) {
+    this.id = id;
+    this.description = description;
+    this.value = value;
+  };
+
+  var Income = function(id, description, value) {
+    this.id = id;
+    this.description = description;
+    this.value = value;
+  };
+})();
+
+var Expense = function(id, description, value) {
+  this.id = id;
+  this.description = description;
+  this.value = value;
+};
 
 var UIController = (function() {
   // object to store DOM strings
@@ -27,25 +45,37 @@ var UIController = (function() {
 
 // module to connect the two above modules together
 var controller = (function(budgetCtlr, UICtlr) {
-  var DOM = UIController.getDOMstrings();
+  // function to contain event listeners
+  var setupEventListeners = function() {
+    var DOM = UIController.getDOMstrings();
+
+    // the ctrlAddItem function is executed when the user clicks the add button
+    document.querySelector(DOM.inputBtn).addEventListener("click", ctrlAddItem);
+
+    // If the user presses the enter key, execute the ctrlAddItem function
+    document.addEventListener("keypress", function(event) {
+      if (event.keyCode === 13 || event.which === 13) {
+        ctrlAddItem();
+      }
+    });
+  };
 
   var ctrlAddItem = function() {
     // get input data
     var input = UIController.getInput();
-    console.log(input);
     // add item to budget controller
     // add new item to UI
     // calculate budget
     // display budget on UI
   };
 
-  // the ctrlAddItem function is executed when the user clicks the add button
-  document.querySelector(DOM.inputBtn).addEventListener("click", ctrlAddItem);
-
-  // If the user presses the enter key, execute the ctrlAddItem function
-  document.addEventListener("keypress", function(event) {
-    if (event.keyCode === 13 || event.which === 13) {
-      ctrlAddItem();
+  return {
+    // initialization method that invokes the setupEventListeners function
+    init: function() {
+      console.log("app started");
+      setupEventListeners();
     }
-  });
+  };
 })(budgetController, UIController);
+
+controller.init();
