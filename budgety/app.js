@@ -101,6 +101,24 @@ var UIController = (function() {
       document.querySelector(element).insertAdjacentHTML("beforeend", newHtml);
     },
 
+    clearFields: function() {
+      var fields, fieldsArr;
+
+      fields = document.querySelectorAll(
+        DOMstrings.inputDescription + ", " + DOMstrings.inputValue
+      );
+
+      // using the slice method on the Array prototype and passing in 'fields' to the call method to ultimately turn 'fields' from a nodelist into an array
+      fieldsArr = Array.prototype.slice.call(fields);
+
+      fieldsArr.forEach(function(element) {
+        element.value = "";
+      });
+
+      // puts the focus on the description field after the user's input has been cleared
+      fieldsArr[0].focus();
+    },
+
     // method to return the DOMstrings object, making it accessible to the other modules
     getDOMstrings: function() {
       return DOMstrings;
@@ -130,11 +148,18 @@ var controller = (function(budgetCtlr, UICtlr) {
 
     // get input data
     input = UICtlr.getInput();
+
     // add item to budget controller
     newItem = budgetCtlr.addItem(input.type, input.description, input.value);
+
     // add new item to UI
     UIController.addListItem(newItem, input.type);
+
+    // clear the fields
+    UIController.clearFields();
+
     // calculate budget
+
     // display budget on UI
   };
 
