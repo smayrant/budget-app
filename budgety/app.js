@@ -13,6 +13,14 @@ var budgetController = (function() {
     this.value = value;
   };
 
+  var calculateTotal = function(type) {
+    var sum = 0;
+    data.allItems[type].forEach(function(value) {
+      sum += value.value;
+    });
+    data.totals[type] = sum;
+  };
+
   var allExpenses = [];
 
   var allIncomes = [];
@@ -25,7 +33,9 @@ var budgetController = (function() {
     totals: {
       exp: 0,
       inc: 0
-    }
+    },
+    budget: 0,
+    percentage: -1
   };
 
   return {
@@ -51,6 +61,31 @@ var budgetController = (function() {
 
       return newItem;
     },
+
+    calculateBudget: function() {
+      // calculate total income and expenses
+      calculateTotal("exp");
+      calculateTotal("inc");
+
+      // calculate the budget
+      data.budget = data.totals.inc - data.totals.exp;
+
+      // calculate the percentage of income that has been spent
+      if (data.totals.inc > 0) {
+        data.percentage = Math.round((data.totals.exp / data.totals.inc) * 100);
+      } else {
+        data.percentage = -1;
+      }
+    },
+
+    getBudget: function() {
+      return {
+        budget: data.budget,
+        totalInc: data.totals.inc,
+        totalExp: data.totals.exp,
+        percentage: data.percentage
+      };
+    },
     testing: function() {
       console.log(data);
     }
@@ -74,7 +109,7 @@ var UIController = (function() {
       return {
         type: document.querySelector(DOMstrings.inputType).value,
         description: document.querySelector(DOMstrings.inputDescription).value,
-        value: document.querySelector(DOMstrings.inputValue).value
+        value: parseFloat(document.querySelector(DOMstrings.inputValue).value)
       };
     },
 
@@ -143,24 +178,41 @@ var controller = (function(budgetCtlr, UICtlr) {
     });
   };
 
+  var updateBudget = function() {
+    // calculate budget
+    budgetController.calculateBudget();
+
+    // return the budget
+    var budget = budgetController.getBudget();
+
+    // display budget on UI
+    console.log(budget);
+  };
+
   var ctrlAddItem = function() {
     var input, newItem;
 
     // get input data
     input = UICtlr.getInput();
 
-    // add item to budget controller
-    newItem = budgetCtlr.addItem(input.type, input.description, input.value);
+    // ensure that the description isn't empty and that the entered value is a number and is greater than 0
+    if (input.description !== "" && !isNaN(input.value) && input.value > 0) {
+      // add item to budget controller
+      newItem = budgetCtlr.addItem(input.type, input.description, input.value);
 
-    // add new item to UI
-    UIController.addListItem(newItem, input.type);
+      // add new item to UI
+      UIController.addListItem(newItem, input.type);
 
-    // clear the fields
-    UIController.clearFields();
+      // clear the fields
+      UIController.clearFields();
 
-    // calculate budget
-
-    // display budget on UI
+      // calculate and update budget
+      updateBudget();
+    } else {
+      alert(
+        "Ensure that you've entered a description and a number greater than 0"
+      );
+    }
   };
 
   return {
