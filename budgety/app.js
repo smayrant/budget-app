@@ -1,9 +1,24 @@
-var budgetController = (function () {
+var budgetCtrl = (function () {
   // expense function constructor
   var Expense = function (id, description, value) {
     this.id = id;
     this.description = description;
     this.value = value;
+    this.percentage = -1;
+  };
+
+  // method added to to expense prototype to calculate the percentage that each expense takes up of the total budget
+  Expense.prototype.calcPercentage = function (totalIncome) {
+    if (totalIncome > 0) {
+      this.percentage = Math.round((this.value / totalIncome) * 100);
+    } else {
+      this.percentage = -1;
+    }
+  };
+
+  // method to return the calculated percentage
+  Expense.prototype.getPercentage = function () {
+    return this.percentage;
   };
 
   // income function constructor
@@ -77,6 +92,7 @@ var budgetController = (function () {
     },
 
     calculateBudget: function () {
+
       // calculate total income and expenses
       calculateTotal("exp");
       calculateTotal("inc");
@@ -90,6 +106,19 @@ var budgetController = (function () {
       } else {
         data.percentage = -1;
       }
+    },
+
+    calculatePercentages: function () {
+      data.allItems.exp.forEach(function (cur) {
+        cur.calcPercentage(data.totals.inc);
+      });
+    },
+
+    getPercentages: function () {
+      var allPerc = data.allItems.exp.map(function (cur) {
+        return cur.getPercentage();
+      });
+      return allPerc;
     },
 
     getBudget: function () {
@@ -106,7 +135,7 @@ var budgetController = (function () {
   };
 })();
 
-var UIController = (function () {
+var UICtrl = (function () {
   // object to store DOM strings
   var DOMstrings = {
     inputType: ".add__type",
@@ -206,7 +235,7 @@ var UIController = (function () {
 var controller = (function (budgetCtlr, UICtlr) {
   // function to contain event listeners
   var setupEventListeners = function () {
-    var DOM = UIController.getDOMstrings();
+    var DOM = UICtrl.getDOMstrings();
 
     // the ctrlAddItem function is executed when the user clicks the add button
     document.querySelector(DOM.inputBtn).addEventListener("click", ctrlAddItem);
@@ -224,23 +253,26 @@ var controller = (function (budgetCtlr, UICtlr) {
       .addEventListener("click", ctrlDeleteItem);
   };
 
-  var updatePercentages = function () {
-    // calculate percentages
-
-    // read percentages from budget controller
-
-    // update UI with new percentages
-  };
-
   var updateBudget = function () {
     // calculate budget
-    budgetController.calculateBudget();
+    budgetCtrl.calculateBudget();
 
     // return the budget
-    var budget = budgetController.getBudget();
+    var budget = budgetCtrl.getBudget();
 
     // display budget on UI
-    UIController.displayBudget(budget);
+    UICtrl.displayBudget(budget);
+  };
+
+  var updatePercentages = function () {
+    // calculate percentages
+    budgetCtrl.calculatePercentages();
+
+    // read percentages from budget controller
+    var percentages = budgetCtrl.getPercentages();
+
+    // update UI with new percentages
+    console.log(percentages);
   };
 
   var ctrlAddItem = function () {
@@ -255,10 +287,10 @@ var controller = (function (budgetCtlr, UICtlr) {
       newItem = budgetCtlr.addItem(input.type, input.description, input.value);
 
       // add new item to UI
-      UIController.addListItem(newItem, input.type);
+      UICtrl.addListItem(newItem, input.type);
 
       // clear the fields
-      UIController.clearFields();
+      UICtrl.clearFields();
 
       // calculate and update budget
       updateBudget();
@@ -282,10 +314,10 @@ var controller = (function (budgetCtlr, UICtlr) {
       ID = parseInt(splitID[1]);
 
       // delete item from data structure
-      budgetController.deleteItem(type, ID);
+      budgetCtrl.deleteItem(type, ID);
 
       // delete the item from the UI
-      UIController.deleteListItem(itemID);
+      UICtrl.deleteListItem(itemID);
 
       // update and show the new budget
       updateBudget();
@@ -300,7 +332,7 @@ var controller = (function (budgetCtlr, UICtlr) {
     init: function () {
       console.log("app started");
       // ensures everything is set to 0 or -1 in the percentage's case, on page load
-      UIController.displayBudget({
+      UICtrl.displayBudget({
         budget: 0,
         totalInc: 0,
         totalExp: 0,
@@ -309,7 +341,7 @@ var controller = (function (budgetCtlr, UICtlr) {
       setupEventListeners();
     }
   };
-})(budgetController, UIController);
+})(budgetCtrl, UICtrl);
 
 // invoking the init method
 controller.init();
